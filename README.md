@@ -11,10 +11,9 @@
 ---
 
 ## 구조
-msa-servers/ 
-├─ api-gateway/ # 외부 요청 진입점 및 요청 라우팅
-├─ auth-service/ # 인증 · 인가 및 사용자/역할 관리 
-└─ game-event-service/ # 게임 이벤트 & 보상 처리
+./api-gateway/ # 외부 요청 진입점 및 요청 라우팅
+./auth-service/ # 인증 · 인가 및 사용자/역할 관리 
+./game-event-service/ # 게임 이벤트 & 보상 처리
 
 
 ### 1. api-gateway
