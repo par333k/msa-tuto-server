@@ -1,10 +1,11 @@
-import { NestFactory } from '@nestjs/core';
+import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { Transport, MicroserviceOptions } from '@nestjs/microservices';
 import { ValidationPipe } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston'
 import { AppModule } from 'src/app.module';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AllExceptionsFilter } from 'src/common/filters/all-exceptions.filter';
 import { MessageInterceptor } from 'src/common/interceptors/message.interceptor'
 
 async function bootstrap() {
@@ -14,16 +15,14 @@ async function bootstrap() {
   // 전역 파이프 설정
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,
       transform: true,
-      forbidNonWhitelisted: true,
     }),
   );
-  app.useGlobalInterceptors(new MessageInterceptor(logger, configService))
+  const httpAdapterHost = app.get(HttpAdapterHost);
+  app.useGlobalInterceptors(new MessageInterceptor(logger, configService));
+  app.useGlobalFilters(new AllExceptionsFilter(httpAdapterHost, logger));
 
   app.useLogger(logger);
-  app.setGlobalPrefix('api')
-
   app.connectMicroservice<MicroserviceOptions>({
       transport: Transport.RMQ,
       options: {

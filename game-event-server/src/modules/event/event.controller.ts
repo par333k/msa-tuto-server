@@ -1,36 +1,37 @@
 import {
+  Body,
+  ConflictException,
   Controller,
   Get,
-  Post,
-  Body,
-  Patch,
   Param,
-  Delete,
+  Post,
+  Put,
   Query,
   UseGuards,
-  ConflictException,
-  HttpCode,
-  HttpStatus,
-  Put,
 } from '@nestjs/common';
-import { EventService } from 'src/modules/event/event.service';
-import { CreateEventDto } from 'src/modules/event/dto/create-event.dto';
-import { UpdateEventDto } from 'src/modules/event/dto/update-event.dto';
-import { PaginationDto } from './dto/pagination.dto';
-import { EventFilterDto } from './dto/event-filter.dto';
+import { UserRole } from 'src/common/constants/roles.enum';
+import { Public } from 'src/common/decorators/public.decorator'
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { User } from 'src/common/decorators/user.decorator';
-import { UserRole } from 'src/common/constants/roles.enum';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
+import { CreateEventDto } from 'src/modules/event/dto/create-event.dto';
+import { UpdateEventDto } from 'src/modules/event/dto/update-event.dto';
+import { EventService } from 'src/modules/event/event.service';
+import { EventFilterDto } from './dto/event-filter.dto';
+import { PaginationDto } from './dto/pagination.dto';
 
 @Controller('events')
-@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class EventController {
   constructor(private readonly eventService: EventService) {}
 
   @Post()
   @Roles(UserRole.OPERATOR, UserRole.ADMIN)
-  async create(@Body() createEventDto: CreateEventDto, @User('id') userId: string) {
+  async create(
+    @Body() createEventDto: CreateEventDto,
+    @User('id') userId: string,
+  ) {
     return this.eventService.create(createEventDto, userId);
   }
 
@@ -40,18 +41,22 @@ export class EventController {
     return this.eventService.findAll(filterDto);
   }
 
+  // 클라이언트에서 사용자가 이벤트 보는 api 라고 가정
+  @Public()
   @Get('active')
   async findActiveEvents(@Query() paginationDto: PaginationDto) {
     return this.eventService.findActiveEvents(
       paginationDto.page,
-      paginationDto.limit
+      paginationDto.limit,
     );
   }
 
+  // 클라이언트에서 사용자가 이벤트 보는 api 라고 가정
+  @Public()
   @Get(':id')
   async findOne(
     @Param('id') id: string,
-    @Query('includeDeleted') includeDeleted: boolean = false
+    @Query('includeDeleted') includeDeleted: boolean = false,
   ) {
     return this.eventService.findOne(id, includeDeleted);
   }
@@ -61,16 +66,21 @@ export class EventController {
   async update(
     @Param('id') id: string,
     @Body() updateEventDto: UpdateEventDto,
-    @User('id') userId: string
+    @User('id') userId: string,
   ) {
     try {
-      return await this.eventService.update(id, updateEventDto, userId, updateEventDto.version);
+      return await this.eventService.update(
+        id,
+        updateEventDto,
+        userId,
+        updateEventDto.version,
+      );
     } catch (error) {
       if (error instanceof ConflictException) {
         const latestEvent = await this.eventService.findOne(id);
         throw new ConflictException({
           message: error.message,
-          latestData: latestEvent
+          latestData: latestEvent,
         });
       }
       throw error;

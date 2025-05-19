@@ -12,8 +12,7 @@ import { WINSTON_MODULE_NEST_PROVIDER, WinstonLogger } from 'nest-winston';
 export class AllExceptionsFilter implements ExceptionFilter {
   constructor(
     private readonly httpAdapterHost: HttpAdapterHost,
-    @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: WinstonLogger,
+    @Inject(WINSTON_MODULE_NEST_PROVIDER) private readonly logger: WinstonLogger,
   ) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
@@ -40,7 +39,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       `${request.method} ${httpAdapter.getRequestUrl(request)} ${httpStatus}`,
       exception instanceof Error ? exception.stack : String(exception),
     );
-    console.log(exception);
+    console.log(exception)
     httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
   }
 }

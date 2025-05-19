@@ -23,6 +23,7 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  //update, 관리자가 만드는 유저 API 등은 구현하지 않음
   @Post(':id/roles')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)

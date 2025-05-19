@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { AuthModule } from 'src/common/auth/auth.module';
 import { LoggingModule } from 'src/common/logging/logger.module'
 import { EventModule } from 'src/modules/event/event.module';
 import { RewardModule } from 'src/modules/reward/reward.module';
@@ -23,6 +24,7 @@ import { RedisModule } from 'src/common/redis/redis.module';
       inject: [ConfigService],
     }),
 
+    AuthModule,
     LoggingModule,
     // Redis
     RedisModule,
