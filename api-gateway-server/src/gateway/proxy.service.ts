@@ -1,27 +1,23 @@
-import { HttpService } from '@nestjs/axios'
+import { HttpService } from '@nestjs/axios';
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
-import axios, { AxiosError } from 'axios'
+import axios from 'axios';
 import { Request, Response } from 'express';
-import { WINSTON_MODULE_NEST_PROVIDER, WinstonLogger } from 'nest-winston'
-import * as https from 'node:https'
-import { firstValueFrom } from 'rxjs'
-import { catchError } from 'rxjs/operators'
+import { WINSTON_MODULE_NEST_PROVIDER, WinstonLogger } from 'nest-winston';
 
 @Injectable()
 export class ProxyService {
   constructor(
-    @Inject(WINSTON_MODULE_NEST_PROVIDER) private readonly logger: WinstonLogger,
-    private readonly httpService: HttpService,
-  ) {
-  }
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: WinstonLogger,
+  ) {}
 
-  async proxyRequest(req: Request, res: Response, targetUrl: string): Promise<void> {
+  async proxyRequest(
+    req: Request,
+    res: Response,
+    targetUrl: string,
+  ): Promise<void> {
     const method = req.method.toLowerCase();
     const url = this.createTargetUrl(targetUrl, req);
-    console.log('########method, url#########')
-    console.log(method, url, req.body)
-    console.log('#######################')
-    console.log(typeof req.body)
 
     this.logger.debug(`Proxying ${method.toUpperCase()} request to ${url}`);
 
@@ -35,7 +31,10 @@ export class ProxyService {
       delete headers['content-length'];
 
       // 인증 헤더 확인 및 조정 (필요한 경우)
-      if (headers.authorization && !headers.authorization.startsWith('Bearer ')) {
+      if (
+        headers.authorization &&
+        !headers.authorization.startsWith('Bearer ')
+      ) {
         headers.authorization = `Bearer ${headers.authorization}`;
         console.log('Modified authorization header:', headers.authorization);
       }
@@ -43,27 +42,23 @@ export class ProxyService {
       const response = await axios({
         method: method,
         url: url,
-        headers, // 인증 토큰을 포함한 모든 헤더 전달
+        headers,
         data: Object.keys(req.body || {}).length > 0 ? req.body : undefined,
         params: req.query,
         timeout: 5000,
-        validateStatus: () => true,  // 모든 상태 코드를 허용
+        validateStatus: () => true, // 모든 상태 코드를 허용
       });
 
-      Object.keys(response.headers).forEach(key => {
+      Object.keys(response.headers).forEach((key) => {
         res.set(key, response.headers[key]);
       });
-
-      console.log('########response.data#########')
-      console.log(response.data)
-      console.log('#######################')
-
       // 응답 전송
       res.status(response.status).send(response.data);
     } catch (error) {
-      console.log('########error#########')
+      console.log('########error#########');
       console.log(error)
-      console.log('#######################')
+      console.log('#######################');
+
       this.handleProxyError(error, req, res);
     }
   }
@@ -76,7 +71,9 @@ export class ProxyService {
       result += '/';
     }
 
-    const cleanPath = originalPath.startsWith('/') ? originalPath.substring(1) : originalPath;
+    const cleanPath = originalPath.startsWith('/')
+      ? originalPath.substring(1)
+      : originalPath;
 
     return result + cleanPath;
   }
@@ -88,8 +85,7 @@ export class ProxyService {
     );
     if (error && typeof error === 'object' && 'response' in error) {
       // HTTP 오류 응답 (4xx, 5xx)
-      const errorResponse = (error as any).response;  // 'response' 속성을 errorResponse 변수로 추출
-
+      const errorResponse = (error as any).response; // 'response' 속성을 errorResponse 변수로 추출
 
       res.status(errorResponse.status).json({
         statusCode: errorResponse.status,
