@@ -25,7 +25,7 @@ export class RedisService {
     return this.redisClient.incr(key);
   }
 
-  async expire(key: string, ttl: number): Promise<number> {
+  async expire(key: string, ttl: number): Promise<boolean> {
     return this.redisClient.expire(key, ttl);
   }
 
