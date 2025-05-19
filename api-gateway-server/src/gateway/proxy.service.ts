@@ -56,7 +56,7 @@ export class ProxyService {
       res.status(response.status).send(response.data);
     } catch (error) {
       console.log('########error#########');
-      console.log(error)
+      console.log(error);
       console.log('#######################');
 
       this.handleProxyError(error, req, res);

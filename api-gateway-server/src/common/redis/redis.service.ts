@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { RedisClientType } from 'redis';
-import { REDIS_CLIENT } from 'src/common/redis/redis.provider'
+import { REDIS_CLIENT } from 'src/common/redis/redis.provider';
 
 @Injectable()
 export class RedisService {
@@ -9,7 +9,7 @@ export class RedisService {
   ) {
   }
 
-  async get(key: string): Promise<string | {}> {
+  async get(key: string): Promise<string | null> {
     return this.redisClient.get(key);
   }
 
@@ -25,7 +25,7 @@ export class RedisService {
     return this.redisClient.incr(key);
   }
 
-  async expire(key: string, ttl: number): Promise<number> {
+  async expire(key: string, ttl: number): Promise<boolean> {
     return this.redisClient.expire(key, ttl);
   }
 

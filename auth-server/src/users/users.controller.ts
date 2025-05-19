@@ -11,7 +11,8 @@ import { UsersService } from 'src/users/users.service';
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
-    @Inject(WINSTON_MODULE_NEST_PROVIDER)private readonly logger: WinstonLogger
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: WinstonLogger,
   ) {}
 
   @Get()
@@ -25,21 +26,17 @@ export class UsersController {
   @Post(':id/roles')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  async addRole(
-    @Param('id') id: string,
-    @Body() addRoleDto: AddRoleDto,
-  ) {
-    this.logger.log(`사용자 역할 추가 요청 - ID: ${id}, 역할: ${addRoleDto.role}`);
+  async addRole(@Param('id') id: string, @Body() addRoleDto: AddRoleDto) {
+    this.logger.log(
+      `사용자 역할 추가 요청 - ID: ${id}, 역할: ${addRoleDto.role}`,
+    );
     return this.usersService.addRole(id, addRoleDto.role);
   }
 
   @Delete(':id/roles/:role')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  async removeRole(
-    @Param('id') id: string,
-    @Param('role') role: Role,
-  ) {
+  async removeRole(@Param('id') id: string, @Param('role') role: Role) {
     this.logger.log(`사용자 역할 제거 요청 - ID: ${id}, 역할: ${role}`);
     return this.usersService.removeRole(id, role);
   }
