@@ -16,6 +16,10 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
+    console.log('########registerDto#########')
+    console.log(registerDto)
+    console.log('#######################')
+
     this.logger.log(`회원가입 요청 - 이메일: ${registerDto.email}`);
     return this.authService.register(registerDto);
   }
@@ -28,10 +32,14 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async refreshToken(@Body() refreshTokenDto: RefreshTokenDto, @CurrentUser() user: JwtUserDto ){
-
     this.logger.log(`토큰 갱신 요청 - 사용자 ID: ${user.userId}`);
+    console.log('########user, refreshTokenDto#########')
+    console.log(user, refreshTokenDto)
+    console.log('#######################')
+
     return this.authService.refreshToken(user.userId, refreshTokenDto.refreshToken);
   }
 

@@ -11,9 +11,9 @@ import { RequestEligibilityService } from '../services/request-eligibility.servi
 import { EventEligibilityDto } from '../dto/event-eligibility.dto';
 import { PaginationDto } from 'src/modules/event/dto/pagination.dto';
 
-@Controller('event-reward-requests')
+@Controller('event-requests')
 @UseGuards(RolesGuard)
-export class EventRewardRequestHttpController {
+export class EventRequestHttpController {
   constructor(
     private readonly rewardRequestService: RewardRequestService,
     private readonly eventService: EventService,
@@ -75,7 +75,7 @@ export class EventRewardRequestHttpController {
   /**
    * 사용자의 보상 요청 이력을 조회합니다.
    */
-  @Get('reward-requests')
+  @Get('reward-requests/history')
   @Roles(UserRole.USER)
   async getMyRequests(
     @User('id') userId: string,
@@ -87,7 +87,7 @@ export class EventRewardRequestHttpController {
   /**
    * 모든 보상 요청 이력을 조회합니다. (관리자/감사자용)
    */
-  @Get('all')
+  @Get('reward-requests/history/all')
   @Roles(UserRole.OPERATOR, UserRole.AUDITOR, UserRole.ADMIN)
   async getAllRequests(@Query() filterDto: RewardRequestFilterDto) {
     return this.rewardRequestService.findAll(filterDto);

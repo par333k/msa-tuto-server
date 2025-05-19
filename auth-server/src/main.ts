@@ -13,25 +13,18 @@ async function bootstrap() {
   const logger = app.get(WINSTON_MODULE_NEST_PROVIDER);
 
   app.useLogger(logger);
-  app.setGlobalPrefix('api');
   app.use(helmet());
   app.useGlobalFilters(new HttpExceptionFilter(logger));
   app.useGlobalInterceptors(new TransformInterceptor());
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,
       transform: true,
-      forbidNonWhitelisted: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
     }),
   );
-
-  app.enableCors();
+  app.enableCors('*')
 
   const port = configService.get<number>('PORT', 4000);
-  await app.listen(port);
+  await app.listen(port,'0.0.0.0');
   console.log(`Auth server running on port ${port}`);
 }
 bootstrap();

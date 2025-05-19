@@ -34,9 +34,10 @@ export class GatewayController {
     }
 
     const path = req.path.substring(1); // Remove leading slash
+    const method = req.method;
 
     // Find appropriate route configuration
-    const routeResult = this.gatewayService.getRouteConfigForPath(path);
+    const routeResult = this.gatewayService.getRouteConfigForPath(path, method);
 
     if (!routeResult) {
       this.logger.warn(`No route configuration found for path: ${path}`);
@@ -52,7 +53,6 @@ export class GatewayController {
 
     // Store matched route pattern for proxy service
     req['_matchedRoute'] = matchedPattern;
-
 
     // Handle authorization based on route config
     if (routeConfig.requireAuth && !req.user) {
@@ -111,7 +111,8 @@ export class GatewayController {
   ): Promise<void> {
     try {
       const method = req.method.toLowerCase();
-      const { pattern, options = {} } = routeConfig.rabbitmq;
+      const correlationId = req.headers['x-correlation-id'];
+      const { pattern, options = { messageId: correlationId } } = routeConfig.rabbitmq;
 
       // 메시지 데이터 준비
       const messageData = {

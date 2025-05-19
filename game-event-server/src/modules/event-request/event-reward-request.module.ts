@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { RedisModule } from 'src/common/redis/redis.module'
 import {
-  EventRewardRequestHttpController,
-} from 'src/modules/event-request/http-controllers/event-reward-request-http.controller';
+  EventRequestHttpController,
+} from 'src/modules/event-request/http-controllers/event-request-http.controller';
 import { EventRewardRequestController } from 'src/modules/event-request/event-reward-request.controller';
 import { RewardRequest, RewardRequestSchema } from 'src/modules/event-request/schemas/reward-request.schema';
 import { ConditionValidatorService } from 'src/modules/event-request/services/condition-validator.service';
@@ -25,10 +26,11 @@ import { TimePeriodValidatorStrategy } from './strategies/time-period-validator.
     ]),
     EventModule,
     RewardModule,
+    RedisModule,
   ],
   controllers: [
     EventRewardRequestController,      // 메시지 큐 컨트롤러
-    EventRewardRequestHttpController,  // HTTP API 컨트롤러
+    EventRequestHttpController,  // HTTP API 컨트롤러
   ],
   providers: [
     RewardRequestService,

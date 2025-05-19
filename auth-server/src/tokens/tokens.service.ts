@@ -37,25 +37,21 @@ export class TokensService {
   // 리프레시 토큰 검증
   async validateRefreshToken(userId: string, refreshToken: string): Promise<boolean> {
     try {
-      // Redis에서 사용자의 리프레시 토큰 조회
-      const storedToken = await this.cacheService.get<string>(`refresh_token:${userId}`);
-
+      const result = await this.cacheService.get<string>(`refresh_token:${userId}`);
+      const storedToken = JSON.parse(result)
       if (!storedToken) {
         return false;
       }
-
       // 제공된 토큰과 저장된 토큰 비교
-      if (storedToken !== refreshToken) {
+      if (String(storedToken).trim() !== String(refreshToken).trim()) {
         return false;
       }
 
-      // JWT 검증
       try {
         const payload = this.jwtService.verify<RefreshTokenPayload>(refreshToken, {
           secret: this.configService.get<string>('JWT_SECRET'),
         });
 
-        // 토큰의 sub(subject)가 userId와 일치하는지 확인
         return payload.sub === userId;
       } catch (error) {
         this.logger.warn(`유효하지 않은 리프레시 토큰: ${error.message}`);

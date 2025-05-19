@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common'
 import { RedisClientType } from 'redis';
 import { REDIS_CLIENT } from 'src/common/redis/redis.provider'
 

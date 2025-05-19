@@ -23,7 +23,7 @@ export class RabbitmqService {
 
       this.client.emit(pattern, {
         ...data,
-        _metadata: {
+          metadata: {
           messageId,
           timestamp: new Date().toISOString(),
           ...options,

@@ -1,111 +1,84 @@
+import { HttpService } from '@nestjs/axios'
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 import { Request, Response } from 'express';
 import { WINSTON_MODULE_NEST_PROVIDER, WinstonLogger } from 'nest-winston'
+import * as https from 'node:https'
+import { firstValueFrom } from 'rxjs'
+import { catchError } from 'rxjs/operators'
 
 @Injectable()
 export class ProxyService {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER) private readonly logger: WinstonLogger,
+    private readonly httpService: HttpService,
   ) {
   }
 
   async proxyRequest(req: Request, res: Response, targetUrl: string): Promise<void> {
     const method = req.method.toLowerCase();
     const url = this.createTargetUrl(targetUrl, req);
+    console.log('########method, url#########')
+    console.log(method, url, req.body)
+    console.log('#######################')
+    console.log(typeof req.body)
 
     this.logger.debug(`Proxying ${method.toUpperCase()} request to ${url}`);
 
     try {
+      // 요청 헤더 설정
+      const headers = { ...req.headers };
+
+      // 불필요한 헤더 제거
+      delete headers.host;
+      delete headers.connection;
+      delete headers['content-length'];
+
+      // 인증 헤더 확인 및 조정 (필요한 경우)
+      if (headers.authorization && !headers.authorization.startsWith('Bearer ')) {
+        headers.authorization = `Bearer ${headers.authorization}`;
+        console.log('Modified authorization header:', headers.authorization);
+      }
+
       const response = await axios({
         method: method,
         url: url,
-        headers: this.createHeadersForTargetRequest(req),
+        headers, // 인증 토큰을 포함한 모든 헤더 전달
         data: Object.keys(req.body || {}).length > 0 ? req.body : undefined,
         params: req.query,
         timeout: 5000,
         validateStatus: () => true,  // 모든 상태 코드를 허용
       });
 
-      // 응답 헤더 설정
-      Object.entries(response.headers).forEach(([header, value]) => {
-        if (!['connection', 'content-length'].includes(header.toLowerCase())) {
-          res.setHeader(header, value);
-        }
+      Object.keys(response.headers).forEach(key => {
+        res.set(key, response.headers[key]);
       });
 
-      // 응답 상태 코드 설정
-      res.status(response.status);
+      console.log('########response.data#########')
+      console.log(response.data)
+      console.log('#######################')
 
-      // 응답 데이터 전송
-      if (typeof response.data === 'object') {
-        res.json(response.data);
-      } else {
-        res.send(response.data);
-      }
+      // 응답 전송
+      res.status(response.status).send(response.data);
     } catch (error) {
+      console.log('########error#########')
+      console.log(error)
+      console.log('#######################')
       this.handleProxyError(error, req, res);
     }
   }
 
   private createTargetUrl(targetBaseUrl: string, req: Request): string {
-    const originalUrl = req.url;
-    const matchedRoute = req['_matchedRoute'] as string;
+    const originalPath = req.path;
 
-    let targetPath = '';
-
-    if (matchedRoute) {
-      // 서비스 이름을 추출 (첫 번째 경로 세그먼트)
-      const serviceName = matchedRoute.split('/')[0];
-
-      // 원본 URL에서 서비스 이름을 제외한 나머지 부분을 대상 경로로 사용
-      const pathSegments = originalUrl.split('/').filter(Boolean);
-      const serviceNameIndex = pathSegments.findIndex(segment => segment === serviceName);
-
-      if (serviceNameIndex !== -1) {
-        targetPath = pathSegments.slice(serviceNameIndex + 1).join('/');
-      } else {
-        // 서비스 이름을 찾을 수 없는 경우 첫 번째 세그먼트를 제외한 나머지 사용
-        targetPath = pathSegments.slice(1).join('/');
-      }
-    } else {
-      // 매칭된 라우트가 없는 경우 (이 코드에 도달하지 않아야 함)
-      const pathParts = originalUrl.split('/');
-      targetPath = pathParts.slice(1).join('/');
-    }
-
-    // 대상 URL과 결합, 이중 슬래시 방지
     let result = targetBaseUrl;
     if (!result.endsWith('/')) {
       result += '/';
     }
 
-    if (targetPath) {
-      result += targetPath;
-    }
+    const cleanPath = originalPath.startsWith('/') ? originalPath.substring(1) : originalPath;
 
-    return result;
-  }
-
-  private createHeadersForTargetRequest(req: Request): Record<string, string> {
-    const headers = { ...req.headers } as Record<string, string>;
-
-    // 전달하지 않을 헤더 제거
-    delete headers.host;
-    delete headers.connection;
-
-    // 사용자 정보 및 역할 추가
-    if (req.user) {
-      headers['x-user-id'] = req.user['userId'];
-      headers['x-user-roles'] = JSON.stringify(req.user['roles'] || []);
-    }
-
-    // 원본 IP 유지
-    if (!headers['x-forwarded-for'] && req.ip) {
-      headers['x-forwarded-for'] = req.ip;
-    }
-
-    return headers;
+    return result + cleanPath;
   }
 
   private handleProxyError(error: unknown, req: Request, res: Response): void {
@@ -117,19 +90,11 @@ export class ProxyService {
       // HTTP 오류 응답 (4xx, 5xx)
       const errorResponse = (error as any).response;  // 'response' 속성을 errorResponse 변수로 추출
 
-      let responseData;
-      try {
-        // JSON 응답 파싱 시도
-        responseData = JSON.parse(errorResponse.body.toString());
-      } catch (e) {
-        // 파싱 실패 시 문자열로 사용
-        responseData = { message: errorResponse.body.toString() };
-      }
 
-      res.status(errorResponse.statusCode).json({
-        statusCode: errorResponse.statusCode,
-        message: responseData.message || 'Error from microservice',
-        error: responseData.error || 'Proxy Error',
+      res.status(errorResponse.status).json({
+        statusCode: errorResponse.status,
+        message: errorResponse.data.message || 'Error from microservice',
+        error: errorResponse.data.error || 'Proxy Error',
       });
     } else if (error && typeof error === 'object' && 'code' in error) {
       // 요청 오류 (네트워크 문제 등)

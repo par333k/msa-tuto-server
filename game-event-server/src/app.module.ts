@@ -5,7 +5,7 @@ import { LoggingModule } from 'src/common/logging/logger.module'
 import { EventModule } from 'src/modules/event/event.module';
 import { RewardModule } from 'src/modules/reward/reward.module';
 import { EventRewardRequestModule } from 'src/modules/event-request/event-reward-request.module';
-import { RedisModule } from 'src/modules/redis/redis.module';
+import { RedisModule } from 'src/common/redis/redis.module';
 
 @Module({
   imports: [

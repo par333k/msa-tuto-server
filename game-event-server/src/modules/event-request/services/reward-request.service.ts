@@ -1,26 +1,39 @@
-import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config'
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { RewardRequest, RewardRequestDocument, RequestStatus } from 'src/modules/event-request/schemas/reward-request.schema';
+import { RedisService } from 'src/common/redis/redis.service'
 import { CreateRewardRequestDto } from 'src/modules/event-request/dto/create-reward-request.dto';
-import { UpdateRewardRequestDto } from 'src/modules/event-request/dto/update-reward-request.dto';
-import { RewardRequestFilterDto } from 'src/modules/event-request/dto/reward-request-filter.dto';
 import { PaginatedRewardRequestsDto } from 'src/modules/event-request/dto/paginated-reward-requests.dto';
-import { EventService } from 'src/modules/event/event.service';
-import { RewardService } from 'src/modules/reward/reward.service';
+import { RewardRequestFilterDto } from 'src/modules/event-request/dto/reward-request-filter.dto';
+import {
+  RequestStatus,
+  RewardRequest,
+  RewardRequestDocument,
+} from 'src/modules/event-request/schemas/reward-request.schema';
 import { ConditionValidatorService } from 'src/modules/event-request/services/condition-validator.service';
+import { EventService } from 'src/modules/event/event.service';
 import { EventStatus } from 'src/modules/event/schemas/event.schema';
 
 @Injectable()
 export class RewardRequestService {
+  private readonly IDEMPOTENCY_KEY_PREFIX = 'reward-req:idempotency:';
+  private readonly IDEMPOTENCY_TTL_SECONDS: number;
+
   constructor(
     @InjectModel(RewardRequest.name) private rewardRequestModel: Model<RewardRequestDocument>,
     private readonly eventService: EventService,
     private readonly conditionValidatorService: ConditionValidatorService,
-  ) {}
+    private readonly redisService: RedisService,
+    private readonly configService: ConfigService,
+  ) {
+    // 동시성 문제 해결이 목적이므로 짧게 설정
+    this.IDEMPOTENCY_TTL_SECONDS = this.configService.get<number>('IDEMPOTENCY_TTL_SECONDS', 60000);
+  }
 
   async createEventRewardRequest(userId: string, createRewardRequestDto: CreateRewardRequestDto): Promise<RewardRequest> {
-    const { eventId, metadata } = createRewardRequestDto;
+    const { eventId, headers, metadata } = createRewardRequestDto;
+    const correlationId = headers['x-correlation-id'];
 
     // 이벤트 존재 여부 및 활성 상태 확인
     const event = await this.eventService.findOne(eventId);
@@ -44,6 +57,19 @@ export class RewardRequestService {
        * 이 경우, 보상 지급 과정에서 어떤 이유에 의해 장애가 발생하면 요청의 상태 역시 하나의 트랜잭션으로 관리되거나 재시도가 가능해야합니다.
        * 그럴 때는 구현에 따라서 중복 이벤트 요청을 막는 방식을 바꿔야 합니다
        */
+      const idempotencyKey = `${this.IDEMPOTENCY_KEY_PREFIX}${userId}:${eventId}:${correlationId}`;
+      const existingRequestId = await this.redisService.get(idempotencyKey);
+
+      if (existingRequestId) {
+        const existingRequest = await this.findExistingRequest(userId, eventId);
+
+        if (existingRequest) {
+          return existingRequest;
+        }
+      }
+
+      // redis 에서 race condition 해결을 위한 키가 expired 되었지만 여전히 이벤트를 재요청할 경우 db 에서 조회
+      // 단, 보상 요청이 실패하는 경우를 고려해야 한다면 처리 상태를 함께 확인해야함.
       const existingRequest = await this.findExistingRequest(userId, eventId);
 
       if (existingRequest) {
@@ -76,7 +102,7 @@ export class RewardRequestService {
       const savedRequest = await createdRequest.save();
       // MQ를 이용해 reward 지급 서버에 요청을 보냅니다
       // 트랜잭션을 활용해 이벤트 발송과 요청이 하나로 처리되어야 합니다.
-      // 실제 서비스에서는 아웃박스 패턴을 적용하거나 이벤트 스트리밍 시스템이 필요할 수 있습니다.
+      // 실제 서비스에서는 트랜잭션 아웃박스 패턴과 이벤트 스트리밍 시스템이 필요할 수 있습니다.
       // this.rabbitmqService.emitEvent({ queueName, eventRequest })
       return savedRequest;
     } catch (error) {

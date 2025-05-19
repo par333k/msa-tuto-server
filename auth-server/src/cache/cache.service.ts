@@ -8,9 +8,9 @@ export class CacheService {
     @Inject(CACHE_CLIENT) private redisClient: RedisClientType,
   ) {
   }
-  async get<T>(key: string): Promise<any> {
+  async get<T>(key: string): Promise<string | null> {
     try {
-      // return await this.redisClient.get(key);
+      return await this.redisClient.get(key);
     } catch (error) {
       throw error
     }

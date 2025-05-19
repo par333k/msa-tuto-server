@@ -1,3 +1,4 @@
+# auth-server/Dockerfile 개선안
 FROM node:18-alpine as build
 
 WORKDIR /usr/src/app
@@ -6,7 +7,7 @@ COPY package*.json ./
 
 RUN npm install
 
-COPY .. .
+COPY . .
 
 RUN npm run build
 

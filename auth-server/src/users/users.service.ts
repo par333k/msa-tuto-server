@@ -63,18 +63,10 @@ export class UsersService {
 
   async findById(id: string): Promise<UserDocument> {
     try {
-      const cachedUser = await this.cacheService.get<UserDocument>(`user:id:${id}`);
-      if (cachedUser) {
-        return cachedUser;
-      }
-
       const user = await this.userModel.findById(id).exec();
       if (!user) {
         throw new NotFoundException(`ID ${id}를 가진 사용자를 찾을 수 없습니다`);
       }
-
-      // 캐시에 저장
-      await this.cacheService.set(`user:id:${id}`, user, 3600); // 1시간 캐싱
 
       return user;
     } catch (error) {

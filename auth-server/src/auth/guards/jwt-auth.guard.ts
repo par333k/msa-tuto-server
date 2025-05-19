@@ -7,7 +7,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   private readonly publicPaths = [
     '/auth/login',
     '/auth/register',
-    '/auth/refresh-token',
     '/health',
     '/api-docs',
   ];

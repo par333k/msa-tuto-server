@@ -1,4 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, ConflictException, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  UseGuards,
+  ConflictException,
+  HttpCode,
+  HttpStatus,
+  Put,
+} from '@nestjs/common';
 import { EventService } from 'src/modules/event/event.service';
 import { CreateEventDto } from 'src/modules/event/dto/create-event.dto';
 import { UpdateEventDto } from 'src/modules/event/dto/update-event.dto';
@@ -21,6 +35,7 @@ export class EventController {
   }
 
   @Get()
+  @Roles(UserRole.OPERATOR, UserRole.ADMIN)
   async findAll(@Query() filterDto: EventFilterDto) {
     return this.eventService.findAll(filterDto);
   }
@@ -41,7 +56,7 @@ export class EventController {
     return this.eventService.findOne(id, includeDeleted);
   }
 
-  @Patch(':id')
+  @Put(':id')
   @Roles(UserRole.OPERATOR, UserRole.ADMIN)
   async update(
     @Param('id') id: string,

@@ -5,34 +5,26 @@ import { ProxyRouteConfig } from '../interfaces/proxy-route.interface';
 export const authRoutes: ProxyRouteConfig[] = [
   {
     path: 'auth/register',
+    methods: ['POST'],
     targetUrl: process.env.AUTH_SERVICE_URL || 'http://auth-service:4000',
     requireAuth: false,
   },
   {
     path: 'auth/login',
+    methods: ['POST'],
     targetUrl: process.env.AUTH_SERVICE_URL || 'http://auth-service:4000',
     requireAuth: false,
   },
   {
     path: 'auth/refresh',
+    methods: ['POST'],
     targetUrl: process.env.AUTH_SERVICE_URL || 'http://auth-service:4000',
-    requireAuth: false,
+    requireAuth: true,
   },
   {
     path: 'auth/logout',
+    methods: ['POST'],
     targetUrl: process.env.AUTH_SERVICE_URL || 'http://auth-service:4000',
     requireAuth: true,
-  },
-  {
-    path: 'auth/users',
-    targetUrl: process.env.AUTH_SERVICE_URL || 'http://auth-service:4000',
-    requireAuth: true,
-    roles: [Role.ADMIN],
-  },
-  {
-    path: 'auth/roles',
-    targetUrl: process.env.AUTH_SERVICE_URL || 'http://auth-service:4000',
-    requireAuth: true,
-    roles: [Role.ADMIN],
   },
 ];

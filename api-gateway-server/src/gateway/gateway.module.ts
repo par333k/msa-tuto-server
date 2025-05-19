@@ -1,3 +1,4 @@
+import { HttpModule, HttpService } from '@nestjs/axios'
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { LoggingModule } from 'src/common/logging/logging.module'
@@ -15,6 +16,7 @@ import { ProxyService } from './proxy.service';
     LoggingModule,
     RabbitmqModule,
     RolesModule,
+    HttpModule,
   ],
   controllers: [GatewayController],
   providers: [GatewayService, ProxyService],

@@ -3,7 +3,7 @@ export interface ProxyRouteConfig {
   targetUrl: string;
   requireAuth: boolean;
   roles?: string[];
-  methods?: string[];
+  methods: string[];
   permissions?: string[];
   useMessageQueue?: boolean;
   // RabbitMQ 설정

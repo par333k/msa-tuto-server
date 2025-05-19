@@ -10,8 +10,15 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
+  const corsOptions = {
+    credentials: true,
+    origin: [
+      'http://localhost:4000',
+      'http://localhost:5000',
+    ],
+  }
   try {
-    const app = await NestFactory.create(AppModule, { cors: true, logger: ['error', 'warn'] });
+    const app = await NestFactory.create(AppModule, { cors: corsOptions, logger: ['error', 'warn'] });
     const logger = app.get(WINSTON_MODULE_NEST_PROVIDER);
     app.useLogger(logger);
 

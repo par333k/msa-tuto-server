@@ -3,15 +3,15 @@ version: '3.8'
 services:
   auth-service:
     build:
-      context: ..
-      dockerfile: ../game-event-server/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     container_name: auth-service
     restart: unless-stopped
     ports:
       - "4000:4000"
     environment:
       - NODE_ENV=production
-      - PORT=3001
+      - PORT=4000
       - MONGODB_URI=mongodb://mongodb:27017/auth-service
       - REDIS_HOST=redis
       - REDIS_PORT=6379
