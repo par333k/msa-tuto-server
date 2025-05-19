@@ -1,18 +1,18 @@
-import { Controller, Get, Post, Body, UseGuards, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { UserRole } from 'src/common/constants/roles.enum';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { User } from 'src/common/decorators/user.decorator';
-import { UserRole } from 'src/common/constants/roles.enum';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
-import { RewardRequestService } from '../services/reward-request.service';
-import { CreateRewardRequestDto } from '../dto/create-reward-request.dto';
-import { RewardRequestFilterDto } from '../dto/reward-request-filter.dto';
-import { EventService } from 'src/modules/event/event.service';
-import { RequestEligibilityService } from '../services/request-eligibility.service';
-import { EventEligibilityDto } from '../dto/event-eligibility.dto';
 import { PaginationDto } from 'src/modules/event/dto/pagination.dto';
+import { EventService } from 'src/modules/event/event.service';
+import { EventEligibilityDto } from '../dto/event-eligibility.dto';
+import { RewardRequestFilterDto } from '../dto/reward-request-filter.dto';
+import { RequestEligibilityService } from '../services/request-eligibility.service';
+import { RewardRequestService } from '../services/reward-request.service';
 
 @Controller('event-requests')
-@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class EventRequestHttpController {
   constructor(
     private readonly rewardRequestService: RewardRequestService,
@@ -30,24 +30,29 @@ export class EventRequestHttpController {
     @User('id') userId: string,
     @Query() paginationDto: PaginationDto,
   ): Promise<{
-    events: EventEligibilityDto[],
-    total: number,
-    page: number,
-    limit: number,
-    pages: number,
+    events: EventEligibilityDto[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
   }> {
     // 활성 이벤트 목록 조회
     const activeEvents = await this.eventService.findActiveEvents(
       paginationDto.page,
-      paginationDto.limit
+      paginationDto.limit,
     );
 
     // 각 이벤트에 대한 참여 자격 확인
     const eligibilityResults = await Promise.all(
       activeEvents.items.map(async (event) => {
-        const eligibility = await this.requestEligibilityService.checkEligibility(userId, event);
-        return new EventEligibilityDto(event, eligibility.eligible, eligibility.reason);
-      })
+        const eligibility =
+          await this.requestEligibilityService.checkEligibility(userId, event);
+        return new EventEligibilityDto(
+          event,
+          eligibility.eligible,
+          eligibility.reason,
+        );
+      }),
     );
 
     return {
@@ -67,7 +72,7 @@ export class EventRequestHttpController {
   async checkEligibility(
     @User('id') userId: string,
     @Param('eventId') eventId: string,
-  ): Promise<{ eligible: boolean, reason?: string }> {
+  ): Promise<{ eligible: boolean; reason?: string }> {
     const event = await this.eventService.findOne(eventId);
     return this.requestEligibilityService.checkEligibility(userId, event);
   }

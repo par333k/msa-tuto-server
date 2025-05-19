@@ -1,4 +1,3 @@
-import { HttpService } from '@nestjs/axios';
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { Request, Response } from 'express';

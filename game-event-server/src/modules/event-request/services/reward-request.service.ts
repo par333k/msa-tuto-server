@@ -1,8 +1,12 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config'
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { RedisService } from 'src/common/redis/redis.service'
+import { RedisService } from 'src/common/redis/redis.service';
 import { CreateRewardRequestDto } from 'src/modules/event-request/dto/create-reward-request.dto';
 import { PaginatedRewardRequestsDto } from 'src/modules/event-request/dto/paginated-reward-requests.dto';
 import { RewardRequestFilterDto } from 'src/modules/event-request/dto/reward-request-filter.dto';
@@ -21,17 +25,24 @@ export class RewardRequestService {
   private readonly IDEMPOTENCY_TTL_SECONDS: number;
 
   constructor(
-    @InjectModel(RewardRequest.name) private rewardRequestModel: Model<RewardRequestDocument>,
+    @InjectModel(RewardRequest.name)
+    private rewardRequestModel: Model<RewardRequestDocument>,
     private readonly eventService: EventService,
     private readonly conditionValidatorService: ConditionValidatorService,
     private readonly redisService: RedisService,
     private readonly configService: ConfigService,
   ) {
     // 동시성 문제 해결이 목적이므로 짧게 설정
-    this.IDEMPOTENCY_TTL_SECONDS = this.configService.get<number>('IDEMPOTENCY_TTL_SECONDS', 60000);
+    this.IDEMPOTENCY_TTL_SECONDS = this.configService.get<number>(
+      'IDEMPOTENCY_TTL_SECONDS',
+      60000,
+    );
   }
 
-  async createEventRewardRequest(userId: string, createRewardRequestDto: CreateRewardRequestDto): Promise<RewardRequest> {
+  async createEventRewardRequest(
+    userId: string,
+    createRewardRequestDto: CreateRewardRequestDto,
+  ): Promise<RewardRequest> {
     const { eventId, headers, metadata } = createRewardRequestDto;
     const correlationId = headers['x-correlation-id'];
 
@@ -48,7 +59,6 @@ export class RewardRequestService {
     if (now < event.startDate || now > event.endDate) {
       throw new BadRequestException('이벤트 기간이 아닙니다.');
     }
-
 
     try {
       // 중복 요청 확인
@@ -73,19 +83,26 @@ export class RewardRequestService {
       const existingRequest = await this.findExistingRequest(userId, eventId);
 
       if (existingRequest) {
-        throw new BadRequestException('이미 해당 이벤트에 대한 보상 요청이 존재합니다.');
+        throw new BadRequestException(
+          '이미 해당 이벤트에 대한 보상 요청이 존재합니다.',
+        );
       }
 
       // 조건 충족 여부 검증
-      const isConditionMet = await this.conditionValidatorService.validateCondition(
-        userId,
-        event.type,
-        event.condition,
-      );
+      const isConditionMet =
+        await this.conditionValidatorService.validateCondition(
+          userId,
+          event.type,
+          event.condition,
+        );
 
       // 요청 상태 결정
-      const status = isConditionMet ? RequestStatus.APPROVED : RequestStatus.FAILED;
-      const reason = isConditionMet ? null : '이벤트 조건을 충족하지 못했습니다.';
+      const status = isConditionMet
+        ? RequestStatus.APPROVED
+        : RequestStatus.FAILED;
+      const reason = isConditionMet
+        ? null
+        : '이벤트 조건을 충족하지 못했습니다.';
 
       // 보상 요청 생성
       const createdRequest = new this.rewardRequestModel({
@@ -110,7 +127,9 @@ export class RewardRequestService {
         throw error;
       }
 
-      throw new InternalServerErrorException('보상 요청 처리 중 오류가 발생했습니다.');
+      throw new InternalServerErrorException(
+        '보상 요청 처리 중 오류가 발생했습니다.',
+      );
     }
   }
 
@@ -119,7 +138,9 @@ export class RewardRequestService {
    * @param filter 필터링 및 페이지네이션 옵션
    * @returns 페이지네이션이 적용된 보상 요청 목록
    */
-  async findAll(filter?: RewardRequestFilterDto): Promise<PaginatedRewardRequestsDto> {
+  async findAll(
+    filter?: RewardRequestFilterDto,
+  ): Promise<PaginatedRewardRequestsDto> {
     // 필터 객체 직접 구성
     const queryFilter: Record<string, any> = {};
 
@@ -154,7 +175,8 @@ export class RewardRequestService {
 
     // 정렬 옵션
     const sortOption: Record<string, 1 | -1> = {};
-    sortOption[filter?.sortBy || 'createdAt'] = filter?.sortOrder === 'asc' ? 1 : -1;
+    sortOption[filter?.sortBy || 'createdAt'] =
+      filter?.sortOrder === 'asc' ? 1 : -1;
 
     // 쿼리 실행 및 총 문서 수 계산을 병렬로 수행
     const [items, total] = await Promise.all([
@@ -176,10 +198,13 @@ export class RewardRequestService {
    * @param filter 필터링 및 페이지네이션 옵션
    * @returns 페이지네이션이 적용된 보상 요청 목록
    */
-  async findByUserId(userId: string, filter?: Omit<RewardRequestFilterDto, 'userId'>): Promise<PaginatedRewardRequestsDto> {
+  async findByUserId(
+    userId: string,
+    filter?: Omit<RewardRequestFilterDto, 'userId'>,
+  ): Promise<PaginatedRewardRequestsDto> {
     const newFilter: RewardRequestFilterDto = {
       ...(filter || {}),
-      userId
+      userId,
     };
 
     return this.findAll(newFilter);
@@ -191,10 +216,15 @@ export class RewardRequestService {
    * @param eventId 이벤트 ID
    * @returns 이미 존재하는 요청 또는 null
    */
-  async findExistingRequest(userId: string, eventId: string): Promise<RewardRequest | null> {
-    return this.rewardRequestModel.findOne({
-      userId,
-      eventId: new Types.ObjectId(eventId),
-    }).exec();
+  async findExistingRequest(
+    userId: string,
+    eventId: string,
+  ): Promise<RewardRequest | null> {
+    return this.rewardRequestModel
+      .findOne({
+        userId,
+        eventId: new Types.ObjectId(eventId),
+      })
+      .exec();
   }
 }

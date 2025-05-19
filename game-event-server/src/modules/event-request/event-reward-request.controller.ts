@@ -14,7 +14,9 @@ export class EventRewardRequestController {
 
   @EventPattern({ cmd: 'create_reward_request' })
   @Roles(UserRole.USER, UserRole.ADMIN)
-  async createRewardRequest(@Payload() payload: { user: any, data: CreateRewardRequestDto }): Promise<RewardRequest> {
+  async createRewardRequest(
+    @Payload() payload: { user: any; data: CreateRewardRequestDto },
+  ): Promise<RewardRequest> {
     const { user, data } = payload;
     return this.rewardRequestService.createEventRewardRequest(user.id, data);
   }

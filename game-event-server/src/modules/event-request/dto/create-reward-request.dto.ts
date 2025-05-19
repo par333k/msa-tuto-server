@@ -1,4 +1,4 @@
-import { IsDefined, IsMongoId, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsDefined, IsMongoId, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateRewardRequestDto {
   @IsMongoId()
