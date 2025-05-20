@@ -13,8 +13,7 @@ services:
       - NODE_ENV=production
       - PORT=4000
       - MONGODB_URI=mongodb://mongodb:27017/auth-service
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - REDIS_URL=redis://localhost:6379
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRATION=${JWT_EXPIRATION}
       - JWT_REFRESH_EXPIRATION=${JWT_REFRESH_EXPIRATION}
@@ -24,7 +23,7 @@ services:
     volumes:
       - ./logs:/usr/src/app/logs
     networks:
-      - msa-network
+      - microservices-network
     deploy:
       replicas: 2
       resources:
@@ -46,7 +45,7 @@ services:
     volumes:
       - mongodb_data:/data/db
     networks:
-      - msa-network
+      - microservices-network
     command: mongod --wiredTigerCacheSizeGB 1
 
   redis:
@@ -58,7 +57,7 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - msa-network
+      - microservices-network
     command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
 
 volumes:

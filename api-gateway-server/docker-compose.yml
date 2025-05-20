@@ -12,6 +12,16 @@ services:
     networks:
       - microservices-network
 
+  rabbitmq:
+    image: rabbitmq:3.9-management
+    ports:
+      - '5672:5672'  # AMQP 프로토콜
+      - '15672:15672'  # 관리 UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - microservices-network
+
   api-gateway:
     build:
       context: .

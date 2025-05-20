@@ -1,10 +1,16 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Reward, RewardDocument } from 'src/modules/reward/schemas/reward.schema';
-import { CreateRewardDto } from 'src/modules/reward/dto/create-reward.dto';
-import { UpdateRewardDto } from 'src/modules/reward/dto/update-reward.dto';
 import { EventService } from 'src/modules/event/event.service';
+import { CreateRewardDto } from 'src/modules/reward/dto/create-reward.dto';
+import {
+  Reward,
+  RewardDocument,
+} from 'src/modules/reward/schemas/reward.schema';
 
 @Injectable()
 export class RewardService {
@@ -13,12 +19,17 @@ export class RewardService {
     private readonly eventService: EventService,
   ) {}
 
-  async create(createRewardDto: CreateRewardDto, createdBy: string): Promise<Reward> {
+  async create(
+    createRewardDto: CreateRewardDto,
+    createdBy: string,
+  ): Promise<Reward> {
     // 이벤트 존재 여부 확인
     try {
       await this.eventService.findOne(createRewardDto.eventId);
     } catch (error) {
-      throw new BadRequestException(`유효하지 않은 이벤트 ID: ${createRewardDto.eventId}`);
+      throw new BadRequestException(
+        `유효하지 않은 이벤트 ID: ${createRewardDto.eventId}`,
+      );
     }
 
     const createdReward = new this.rewardModel({
@@ -57,6 +68,8 @@ export class RewardService {
   }
 
   async findByEventId(eventId: string): Promise<Reward[]> {
-    return this.rewardModel.find({ eventId: new Types.ObjectId(eventId) }).exec();
+    return this.rewardModel
+      .find({ eventId: new Types.ObjectId(eventId) })
+      .exec();
   }
 }
