@@ -19,7 +19,7 @@ export const gameEventRoutes: ProxyRouteConfig[] = [
     // 메시지 큐 설정
     useMessageQueue: true,
     rabbitmq: {
-      pattern: { cmd: 'create_reward_request' },
+      pattern: 'create_reward_request',
       options: {
         persistent: true,
       },

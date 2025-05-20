@@ -43,8 +43,8 @@ export class RewardRequestService {
     userId: string,
     createRewardRequestDto: CreateRewardRequestDto,
   ): Promise<RewardRequest> {
-    const { eventId, headers, metadata } = createRewardRequestDto;
-    const correlationId = headers['x-correlation-id'];
+    const { eventId, metadata } = createRewardRequestDto;
+    const correlationId = metadata.messageId;
 
     // 이벤트 존재 여부 및 활성 상태 확인
     const event = await this.eventService.findOne(eventId);
@@ -123,6 +123,10 @@ export class RewardRequestService {
       // this.rabbitmqService.emitEvent({ queueName, eventRequest })
       return savedRequest;
     } catch (error) {
+      console.log('########error#########');
+      console.log(error);
+      console.log('#######################');
+
       if (error instanceof BadRequestException) {
         throw error;
       }

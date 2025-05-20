@@ -2,9 +2,9 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import compression from 'compression'
-import helmet from "helmet";
-import { WINSTON_MODULE_NEST_PROVIDER, WinstonLogger } from 'nest-winston';
+import compression from 'compression';
+import helmet from 'helmet';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -12,13 +12,13 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 async function bootstrap() {
   const corsOptions = {
     credentials: true,
-    origin: [
-      'http://localhost:4000',
-      'http://localhost:5000',
-    ],
-  }
+    origin: ['http://localhost:4000', 'http://localhost:5000'],
+  };
   try {
-    const app = await NestFactory.create(AppModule, { cors: corsOptions, logger: ['error', 'warn'] });
+    const app = await NestFactory.create(AppModule, {
+      cors: corsOptions,
+      logger: ['error', 'warn'],
+    });
     const logger = app.get(WINSTON_MODULE_NEST_PROVIDER);
     app.useLogger(logger);
 
@@ -67,7 +67,7 @@ async function bootstrap() {
     // Start the application
     await app.listen(port);
 
-    console.log(`API Gateway running on port ${port} in ${env} mode`)
+    console.log(`API Gateway running on port ${port} in ${env} mode`);
   } catch (error) {
     console.log(`Error starting API Gateway: ${error.message}`, error);
     process.exit(1);
@@ -78,6 +78,5 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   process.exit(1);
 });
-
 
 bootstrap();

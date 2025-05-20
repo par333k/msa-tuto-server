@@ -112,7 +112,7 @@ export class GatewayController {
     try {
       const method = req.method.toLowerCase();
       const correlationId = req.headers['x-correlation-id'];
-      const { pattern, options = { messageId: correlationId } } = routeConfig.rabbitmq;
+      const { pattern, options } = routeConfig.rabbitmq;
 
       // 메시지 데이터 준비
       const messageData = {
@@ -133,7 +133,7 @@ export class GatewayController {
       // 클라이언트에게 바로 응답 (비동기 처리)
       res.status(HttpStatus.ACCEPTED).json({
         message: '요청이 접수되었습니다.',
-        requestId: options.messageId || 'unknown',
+        requestId: correlationId || 'unknown',
         timestamp: new Date().toISOString()
       });
     } catch (error) {

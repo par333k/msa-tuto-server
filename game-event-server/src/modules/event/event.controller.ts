@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { UserRole } from 'src/common/constants/roles.enum';
-import { Public } from 'src/common/decorators/public.decorator'
+import { Public } from 'src/common/decorators/public.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { User } from 'src/common/decorators/user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
@@ -30,9 +30,9 @@ export class EventController {
   @Roles(UserRole.OPERATOR, UserRole.ADMIN)
   async create(
     @Body() createEventDto: CreateEventDto,
-    @User('id') userId: string,
+    @User() user: { userId: string; email: string; roles: UserRole[] },
   ) {
-    return this.eventService.create(createEventDto, userId);
+    return this.eventService.create(createEventDto, user.userId);
   }
 
   @Get()
