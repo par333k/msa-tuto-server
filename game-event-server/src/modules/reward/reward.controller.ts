@@ -41,7 +41,7 @@ export class RewardController {
   })
   @ApiResponse({ status: 403, description: '권한이 없습니다.' })
   async createReward(@Body() createRewardDto: CreateRewardDto, @Request() req) {
-    return this.rewardService.create(createRewardDto, req.user.id);
+    return this.rewardService.create(createRewardDto, req.user.userId);
   }
 
   @Get()

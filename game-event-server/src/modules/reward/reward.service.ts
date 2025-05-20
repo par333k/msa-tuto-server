@@ -58,7 +58,9 @@ export class RewardService {
   }
 
   async findOne(id: string): Promise<Reward> {
-    const reward = await this.rewardModel.findById(id).exec();
+    const reward = await this.rewardModel
+      .findById(new Types.ObjectId(id))
+      .exec();
 
     if (!reward) {
       throw new NotFoundException(`보상 ID ${id}를 찾을 수 없습니다.`);
